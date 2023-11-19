@@ -10,8 +10,12 @@ import jade.domain.FIPAException;
 import jade.lang.acl.ACLMessage;
 
 import javax.swing.*;
+import java.util.HashMap;
 
 public class NewAgent extends Agent {
+
+	public HashMap<String, String> wordToTranslationMap = new HashMap<>();
+	public int messageIdCounter = 0;
     protected void setup() {
         displayResponse("Hello, I am " + getAID().getLocalName());
         addBehaviour(new NewCyclicBehaviour(this));
@@ -67,12 +71,15 @@ class NewCyclicBehaviour extends CyclicBehaviour {
 					if (result.length == 0) newAgent.displayResponse("No service has been found ...");
 					else
 					{
+						String requestId = "Request" + newAgent.messageIdCounter++;
 						String foundAgent = result[0].getName().getLocalName();
 						newAgent.displayResponse("Agent " + foundAgent + " is a service provider. Sending message to " + foundAgent);
 						ACLMessage forward = new ACLMessage(ACLMessage.REQUEST);
 						forward.addReceiver(new AID(foundAgent, AID.ISLOCALNAME));
 						forward.setContent(content);
 						forward.setOntology(ontology);
+						forward.setReplyWith(requestId);
+						newAgent.wordToTranslationMap.put(requestId, content);
 						newAgent.send(forward);
 					}
 				}
@@ -84,7 +91,8 @@ class NewCyclicBehaviour extends CyclicBehaviour {
 			}
 			else
 			{	//when it is an answer
-				newAgent.displayHtmlResponse(content);
+				String originalWord = newAgent.wordToTranslationMap.get(message.getInReplyTo());
+				newAgent.displayHtmlResponse("ID: " + message.getInReplyTo() + "<br/>Original word: " + originalWord + "<br/>Content: " + content);
 			}
 		}
 	}
